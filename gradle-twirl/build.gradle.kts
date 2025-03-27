@@ -13,22 +13,18 @@ plugins {
     signing
 }
 
-println("ENV: " + System.getenv().keys.joinToString())
+println("GRADLE_OPTS: " + System.getenv("GRADLE_OPTS"))
+println("SYSTEM: " + System.getProperties().keys.joinToString())
 
-val compilerVersion: String =
-    // On Renovate environment we don't need a real version,
-    // but version must be set to avoid an exception
-    if (System.getenv().keys.any { it.startsWith("RENOVATE_") }) "0.0.0"
-    else Properties().apply {
-        val file = file("$projectDir/../compiler/version.properties")
-        if (!file.exists()) throw GradleException("Install Twirl Compiler to local Maven repository by `sbt +compiler/publishM2` command")
-        file.inputStream().use { load(it) }
-        if (this.getProperty("twirl.compiler.version")
-                .isNullOrEmpty()
-        ) {
-            throw GradleException("`twirl.compiler.version` key didn't find in ${file.absolutePath}")
-        }
-    }.getProperty("twirl.compiler.version")
+val compilerVersionKey = "twirl.compiler.version"
+val compilerVersion: String = System.getProperty(compilerVersionKey) ?: Properties().apply {
+    val file = file("$projectDir/../compiler/version.properties")
+    if (!file.exists()) throw GradleException("Install Twirl Compiler to local Maven repository by `sbt +compiler/publishM2` command")
+    file.inputStream().use { load(it) }
+    if (this.getProperty(compilerVersionKey).isNullOrEmpty()) {
+        throw GradleException("`$compilerVersionKey` key didn't find in ${file.absolutePath}")
+    }
+}.getProperty(compilerVersionKey)
 
 val isRelease = !compilerVersion.endsWith("SNAPSHOT")
 
