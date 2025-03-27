@@ -13,8 +13,13 @@ plugins {
     signing
 }
 
+println("ENV: " + System.getenv().keys.joinToString())
+
 val compilerVersion: String =
-    Properties().apply {
+    // On Renovate environment we don't need a real version,
+    // but version must be set to avoid an exception
+    if (System.getenv().keys.any { it.startsWith("RENOVATE_") }) "0.0.0"
+    else Properties().apply {
         val file = file("$projectDir/../compiler/version.properties")
         if (!file.exists()) throw GradleException("Install Twirl Compiler to local Maven repository by `sbt +compiler/publishM2` command")
         file.inputStream().use { load(it) }
